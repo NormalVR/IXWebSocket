@@ -48,6 +48,9 @@
                             <li class="navitem">
                                 <a href="../design/" class="nav-link">Design</a>
                             </li>
+                            <li class="navitem">
+                                <a href="../packages/" class="nav-link">Packages</a>
+                            </li>
                             <li class="navitem active">
                                 <a href="./" class="nav-link">Examples</a>
                             </li>
@@ -63,7 +66,7 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="../design/" class="nav-link">
+                                <a rel="prev" href="../packages/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -112,6 +115,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#tls-support-and-configuration" class="nav-link">TLS support and configuration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -149,7 +156,7 @@ webSocket.setUrl(url);
 
 // Optional heart beat, sent every 45 seconds when there is not any traffic
 // to make sure that load balancers do not kill an idle connection.
-webSocket.setHeartBeatPeriod(45);
+webSocket.setPingInterval(45);
 
 // Per message deflate connection is enabled by default. You can tweak its parameters or disable it
 webSocket.disablePerMessageDeflate();
@@ -267,7 +274,7 @@ websocket.configure(url);
 <p>You can configure an optional heart beat / keep-alive, sent every 45 seconds
 when there is no any traffic to make sure that load balancers do not kill an
 idle connection.</p>
-<pre><code class="cpp">webSocket.setHeartBeatPeriod(45);
+<pre><code class="cpp">webSocket.setPingInterval(45);
 </code></pre>
 
 <h3 id="supply-extra-http-headers">Supply extra HTTP headers.</h3>
@@ -322,28 +329,6 @@ Wait time(ms): 10000
 uint32_t m = webSocket.getMaxWaitBetweenReconnectionRetries();
 </code></pre>
 
-<h3 id="tls-support-and-configuration">TLS support and configuration</h3>
-<p>To leverage TLS features, the library must be compiled with the option <code>USE_TLS=1</code>.</p>
-<p>Then, secure sockets are automatically used when connecting to a <code>wss://*</code> url.</p>
-<p>Additional TLS options can be configured by passing a <code>ix::SocketTLSOptions</code> instance to the
-<code>setTLSOptions</code> on <code>ix::WebSocket</code> (or <code>ix::WebSocketServer</code> or <code>ix::HttpServer</code>)</p>
-<pre><code class="cpp">webSocket.setTLSOptions({
-    .certFile = &quot;path/to/cert/file.pem&quot;,
-    .keyFile = &quot;path/to/key/file.pem&quot;,
-    .caFile = &quot;path/to/trust/bundle/file.pem&quot;
-});
-</code></pre>
-
-<p>Specifying <code>certFile</code> and <code>keyFile</code> configures the certificate that will be used to communicate with TLS peers.</p>
-<p>On a client, this is only necessary for connecting to servers that require a client certificate.</p>
-<p>On a server, this is necessary for TLS support.</p>
-<p>Specifying <code>caFile</code> configures the trusted roots bundle file (in PEM format) that will be used to verify peer certificates.
- - The special value of <code>SYSTEM</code> (the default) indicates that the system-configured trust bundle should be used; this is generally what you want when connecting to any publicly exposed API/server.
- - The special value of <code>NONE</code> can be used to disable peer verification; this is only recommended to rule out certificate verification when testing connectivity.</p>
-<p>For a client, specifying <code>caFile</code> can be used if connecting to a server that uses a self-signed cert, or when using a custom CA in an internal environment.</p>
-<p>For a server, specifying <code>caFile</code> implies that:
-1. You require clients to present a certificate
-1. It must be signed by one of the trusted roots in the file</p>
 <h2 id="websocket-server-api">WebSocket server API</h2>
 <pre><code class="cpp">#include &lt;ixwebsocket/IXWebSocketServer.h&gt;
 
@@ -522,7 +507,32 @@ server.wait();
                                               WebSocketHttpHeaders(),
                                               content);
 }
-</code></pre></div>
+</code></pre>
+
+<h2 id="tls-support-and-configuration">TLS support and configuration</h2>
+<p>To leverage TLS features, the library must be compiled with the option <code>USE_TLS=1</code>.</p>
+<p>If you are using OpenSSL, try to be on a version higher than 1.1.x as there there are thread safety problems with 1.0.x.</p>
+<p>Then, secure sockets are automatically used when connecting to a <code>wss://*</code> url.</p>
+<p>Additional TLS options can be configured by passing a <code>ix::SocketTLSOptions</code> instance to the
+<code>setTLSOptions</code> on <code>ix::WebSocket</code> (or <code>ix::WebSocketServer</code> or <code>ix::HttpServer</code>)</p>
+<pre><code class="cpp">webSocket.setTLSOptions({
+    .certFile = &quot;path/to/cert/file.pem&quot;,
+    .keyFile = &quot;path/to/key/file.pem&quot;,
+    .caFile = &quot;path/to/trust/bundle/file.pem&quot;,
+    .tls = true // required in server mode
+});
+</code></pre>
+
+<p>Specifying <code>certFile</code> and <code>keyFile</code> configures the certificate that will be used to communicate with TLS peers.</p>
+<p>On a client, this is only necessary for connecting to servers that require a client certificate.</p>
+<p>On a server, this is necessary for TLS support.</p>
+<p>Specifying <code>caFile</code> configures the trusted roots bundle file (in PEM format) that will be used to verify peer certificates.
+ - The special value of <code>SYSTEM</code> (the default) indicates that the system-configured trust bundle should be used; this is generally what you want when connecting to any publicly exposed API/server.
+ - The special value of <code>NONE</code> can be used to disable peer verification; this is only recommended to rule out certificate verification when testing connectivity.</p>
+<p>For a client, specifying <code>caFile</code> can be used if connecting to a server that uses a self-signed cert, or when using a custom CA in an internal environment.</p>
+<p>For a server, specifying <code>caFile</code> implies that:
+1. You require clients to present a certificate
+1. It must be signed by one of the trusted roots in the file</p></div>
             </div>
         </div>
 
