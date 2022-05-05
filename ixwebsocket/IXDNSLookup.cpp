@@ -63,6 +63,7 @@ namespace ix
         {
             errMsg = gai_strerror(getaddrinfo_result);
             res = nullptr;
+            return AddrInfoPtr { res };
         }
         return AddrInfoPtr{ res, freeaddrinfo };
     }
