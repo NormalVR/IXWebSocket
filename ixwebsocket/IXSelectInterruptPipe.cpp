@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string.h> // for strerror
 #include <unistd.h> // for write
+#include <PlatformNetwork/PlatformNetwork.h> // for pipe()
 
 namespace ix
 {
@@ -61,7 +62,11 @@ namespace ix
             return false;
         }
 
+#if defined(__PROSPERO__)
+        if (fcntl_setNonBlocking(_fildes[kPipeReadIndex], 1) < 0)
+#else
         if (fcntl(_fildes[kPipeReadIndex], F_SETFL, O_NONBLOCK) == -1)
+#endif
         {
             std::stringstream ss;
             ss << "SelectInterruptPipe::init() failed in fcntl(..., O_NONBLOCK) call"
@@ -73,7 +78,11 @@ namespace ix
             return false;
         }
 
+#if defined(__PROSPERO__)
+        if (fcntl_setNonBlocking(_fildes[kPipeWriteIndex], 1) < 0)
+#else
         if (fcntl(_fildes[kPipeWriteIndex], F_SETFL, O_NONBLOCK) == -1)
+#endif
         {
             std::stringstream ss;
             ss << "SelectInterruptPipe::init() failed in fcntl(..., O_NONBLOCK) call"
