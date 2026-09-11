@@ -23,6 +23,18 @@
 
 namespace ix
 {
+    // A non-blocking connect() reports its real failure reason in the SO_ERROR socket option,
+    // not in errno (which is usually stale, i.e. 0, by the time poll() flags the failure).
+    // Reading SO_ERROR lets us surface an accurate message (e.g. "Connection refused")
+    // instead of the misleading "Connect error: No error".
+    static int getConnectError(socket_t fd)
+    {
+        int socketError = 0;
+        socklen_t optLen = sizeof(socketError);
+        getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &socketError, &optLen);
+        return (socketError != 0) ? socketError : Socket::getErrno();
+    }
+
     //
     // This function can be cancelled every 50 ms
     // This is important so that we don't block the main UI thread when shutting down a
@@ -74,8 +86,8 @@ namespace ix
             }
             else if (pollResult == PollResultType::Error)
             {
+                errMsg = std::string("Connect error: ") + strerror(getConnectError(fd));
                 Socket::closeSocket(fd);
-                errMsg = std::string("Connect error: ") + strerror(Socket::getErrno());
                 return -1;
             }
             else if (pollResult == PollResultType::ReadyForWrite)
@@ -84,8 +96,8 @@ namespace ix
             }
             else
             {
+                errMsg = std::string("Connect error: ") + strerror(getConnectError(fd));
                 Socket::closeSocket(fd);
-                errMsg = std::string("Connect error: ") + strerror(Socket::getErrno());
                 return -1;
             }
         }

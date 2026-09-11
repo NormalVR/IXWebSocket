@@ -108,6 +108,16 @@ namespace ix
     {
         std::lock_guard<std::mutex> lock(_socketMutex);
 
+        // Clear any leftover send/receive buffer state from a previous connection before we
+        // build a new socket. On an abrupt close the outgoing CLOSE frame can be left unflushed
+        // in _txbuf; without this it would be transmitted on the freshly reconnected socket,
+        // causing the server to immediately close again (reconnect storm).
+        {
+            std::lock_guard<std::mutex> txLock(_txbufMutex);
+            _txbuf.clear();
+        }
+        _rxbuf.clear();
+
         std::string protocol, host, path, query;
         int port;
         std::string remoteUrl(url);
